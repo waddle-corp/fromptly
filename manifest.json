@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "Fromptly",
+  "version": "0.1.0",
+  "description": "Google AI Studio prompt refiner for Frontend Vibe Coders",
+
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+
+  "host_permissions": [
+    "https://aistudio.google.com/*",
+    "https://api.anthropic.com/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": ["https://aistudio.google.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "icons": {
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
