@@ -16,10 +16,13 @@
 .fromptly-wrapper {
   display: grid !important;
   position: relative;
+  width: 100%;
 }
 
 .fromptly-wrapper > * {
   grid-area: 1 / 1 / 2 / 2;
+  width: 100%;
+  min-width: 0; /* Grid 아이템이 축소될 수 있도록 */
 }
 
 /* Backdrop (위에 밑줄 그리기) */
@@ -43,13 +46,14 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  color: transparent;
+  /* color는 JavaScript에서 textarea의 색상을 복사 */
   min-height: 100%;
 }
 
 /* 빨간 밑줄 (Grammarly style) */
 .fromptly-underline {
   background: transparent;
+  /* color는 JavaScript에서 동적으로 설정 */
   border-bottom: 2px solid #ff4444;
   border-radius: 0;
   cursor: pointer;

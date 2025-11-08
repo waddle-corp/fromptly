@@ -85,6 +85,12 @@ function createHighlightOverlay(textarea) {
   wrapper.style.display = 'grid';
   wrapper.style.position = 'relative';
 
+  // Textarea의 원래 width와 display 속성 복사
+  const textareaComputedStyle = window.getComputedStyle(textarea);
+  wrapper.style.width = textareaComputedStyle.width;
+  wrapper.style.maxWidth = textareaComputedStyle.maxWidth;
+  wrapper.style.minWidth = textareaComputedStyle.minWidth;
+
   // Textarea를 wrapper로 감싸기
   textarea.parentElement.insertBefore(wrapper, textarea);
   wrapper.appendChild(textarea);
@@ -127,6 +133,9 @@ function createHighlightOverlay(textarea) {
   // Box sizing
   highlights.style.boxSizing = computedStyle.boxSizing;
 
+  // 색상 복사 (모든 텍스트 보이게)
+  highlights.style.color = computedStyle.color;
+
   console.log('[Fromptly] Copied styles from textarea');
 
   // 텍스트를 HTML로 변환하면서 밑줄 추가
@@ -156,19 +165,35 @@ function createHighlightOverlay(textarea) {
   backdrop.style.gridArea = '1 / 1 / 2 / 2';
   textarea.style.gridArea = '1 / 1 / 2 / 2';
 
-  // Textarea 스타일 조정
+  // Textarea 스타일 조정 (텍스트만 투명하게, 커서는 보이게)
+  const originalColor = computedStyle.color;
+  textarea.style.color = 'transparent';
+  textarea.style.caretColor = originalColor; // 커서는 원래 색상
   textarea.style.background = 'transparent';
   textarea.style.position = 'relative';
-  textarea.style.zIndex = '1'; // backdrop보다 낮게 (backdrop이 위에)
+  textarea.style.zIndex = '1'; // 아래로
 
-  // Backdrop을 맨 위로
+  // Backdrop은 위에 배치 (이벤트를 받기 위해)
   backdrop.style.position = 'relative';
   backdrop.style.zIndex = '2';
+  backdrop.style.pointerEvents = 'none'; // 기본적으로 클릭 통과
+  backdrop.style.height = computedStyle.height;
+  backdrop.style.minHeight = computedStyle.minHeight;
+
+  // 원래 색상 저장
+  wordHighlights.set(textarea, { wrapper, backdrop, syncScroll, originalColor });
 
   // 밑줄 span에 이벤트 리스너 추가
   const underlineSpans = backdrop.querySelectorAll('.fromptly-underline');
+  console.log('[Fromptly] Found underline spans:', underlineSpans.length);
+
   underlineSpans.forEach(span => {
+    // 명시적으로 pointer-events 활성화
+    span.style.pointerEvents = 'auto';
+    span.style.cursor = 'pointer';
+
     span.addEventListener('click', () => {
+      console.log('[Fromptly] Underline clicked');
       const suggestions = JSON.parse(span.dataset.suggestions);
       const startIndex = parseInt(span.dataset.start);
       const endIndex = parseInt(span.dataset.end);
@@ -177,6 +202,7 @@ function createHighlightOverlay(textarea) {
     });
 
     span.addEventListener('mouseenter', () => {
+      console.log('[Fromptly] Underline hovered');
       const suggestions = JSON.parse(span.dataset.suggestions);
       const startIndex = parseInt(span.dataset.start);
       const endIndex = parseInt(span.dataset.end);
@@ -195,14 +221,11 @@ function createHighlightOverlay(textarea) {
   });
 
   // Scroll 동기화
-  textarea.addEventListener('scroll', syncScroll);
   function syncScroll() {
     backdrop.scrollTop = textarea.scrollTop;
     backdrop.scrollLeft = textarea.scrollLeft;
   }
-
-  // 추적
-  wordHighlights.set(textarea, { wrapper, backdrop, syncScroll });
+  textarea.addEventListener('scroll', syncScroll);
 
   console.log('[Fromptly] Underlines created for', improvableWords.length, 'words');
 }
@@ -234,6 +257,8 @@ function removeHighlightOverlay(textarea) {
     }
 
     // Textarea 스타일 복원
+    textarea.style.color = existing.originalColor || '';
+    textarea.style.caretColor = '';
     textarea.style.background = '';
     textarea.style.gridArea = '';
     textarea.style.zIndex = '';
