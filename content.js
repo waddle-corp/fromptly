@@ -162,9 +162,10 @@ function attachInputListener(textarea) {
 
   textarea.addEventListener('input', (e) => {
     const value = e.target.value.trim();
+    console.log('[Fromptly] Input value:', value);
 
-    // 최소 길이 체크 (10자)
-    if (value.length < 10) {
+    // 빈 값이면 제안 바 제거
+    if (value.length === 0) {
       removeSuggestionBar(textarea);
       return;
     }
