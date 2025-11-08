@@ -58,8 +58,27 @@ function showSuggestionBar(textarea, suggestionA, suggestionB) {
   // 새 Bar 생성
   const bar = createSuggestionBar(suggestionA, suggestionB);
 
-  // Textarea 다음에 삽입
-  textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+  // actions-container 찾기 (textarea의 상위 DOM에서 검색)
+  let container = textarea;
+  let actionsContainer = null;
+
+  // 최대 10단계까지 상위 요소 탐색
+  for (let i = 0; i < 10; i++) {
+    container = container.parentElement;
+    if (!container) break;
+
+    actionsContainer = container.querySelector('.actions-container');
+    if (actionsContainer) break;
+  }
+
+  // actions-container를 찾았으면 그 바로 위에 삽입, 못 찾았으면 textarea 다음에 삽입
+  if (actionsContainer && actionsContainer.parentElement) {
+    actionsContainer.parentElement.insertBefore(bar, actionsContainer);
+    console.log('[Fromptly] Suggestion bar inserted before actions-container');
+  } else {
+    textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+    console.log('[Fromptly] Suggestion bar inserted after textarea (fallback)');
+  }
 
   // Bar 추적
   suggestionBars.set(textarea, bar);
