@@ -79,19 +79,43 @@ Click on a suggestion to automatically apply it to the textarea.
 
 ## 🔧 API Key Setup (Optional)
 
-For better suggestions, connect Claude API:
+For better suggestions, connect your preferred AI API:
+
+### Option 1: Claude API (Anthropic)
 
 1. Get an API Key from [Anthropic Console](https://console.anthropic.com/)
-2. Open `background.js` file
-3. Replace the API Key on line 6:
+2. Open `config.js` file
+3. Update the configuration:
 
 ```javascript
-const ANTHROPIC_API_KEY = 'sk-ant-your-api-key-here';
+export const config = {
+  AI_PROVIDER: 'claude',  // Use Claude
+  ANTHROPIC_API_KEY: 'sk-ant-your-api-key-here',
+  // ... other settings
+};
 ```
 
 4. Reload the extension
 
-**Note**: Fallback suggestions work without an API key.
+### Option 2: Gemini API (Google)
+
+1. Get an API Key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Open `config.js` file
+3. Update the configuration:
+
+```javascript
+export const config = {
+  AI_PROVIDER: 'gemini',  // Use Gemini
+  GEMINI_API_KEY: 'your-gemini-api-key-here',
+  // ... other settings
+};
+```
+
+4. Reload the extension
+
+**Note**: 
+- Choose `AI_PROVIDER: 'claude'` or `AI_PROVIDER: 'gemini'` in `config.js`
+- Fallback suggestions work without an API key
 
 ---
 
@@ -131,8 +155,10 @@ const ANTHROPIC_API_KEY = 'sk-ant-your-api-key-here';
 ```
 fromptly/
 ├── manifest.json       # Extension configuration
+├── config.js           # API Keys and AI Provider selection
+├── config.example.js   # Configuration template
 ├── content.js          # Textarea detection and UI manipulation
-├── background.js       # LLM API calls
+├── background.js       # LLM API calls (Claude + Gemini)
 ├── styles.css          # Suggestion Bar styling
 ├── icon.svg            # Extension icon
 └── README.md           # This file
@@ -142,9 +168,10 @@ fromptly/
 
 1. **Textarea Detection**: Identifies Google AI Studio textareas using `cdktextareaautosize` attribute and placeholder
 2. **Debounce**: Waits 1 second after last input (prevents excessive API calls)
-3. **LLM Integration**: Requests prompt improvements from Claude API
-4. **Inline Suggestion**: Displays suggestions directly below textarea
-5. **Click to Apply**: Automatically applies selected suggestion to textarea
+3. **AI Provider Selection**: Chooses between Claude or Gemini API based on config
+4. **LLM Integration**: Requests prompt improvements from selected AI provider
+5. **Inline Suggestion**: Displays suggestions directly below textarea
+6. **Click to Apply**: Automatically applies selected suggestion to textarea
 
 ---
 
@@ -179,7 +206,8 @@ After code changes:
 ### ✅ Implemented
 - Textarea auto-detection (both states)
 - Real-time input detection (1 second debounce)
-- LLM API integration (Claude)
+- LLM API integration (Claude + Gemini 2.5 Flash)
+- AI Provider selection (configurable)
 - Inline Suggestion Bar
 - Click to Apply
 - Fallback (default suggestions on API error)
