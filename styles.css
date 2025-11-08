@@ -12,6 +12,120 @@
   z-index: 1000;
 }
 
+/* Wrapper (Grid로 겹치기) */
+.fromptly-wrapper {
+  display: grid !important;
+  position: relative;
+}
+
+.fromptly-wrapper > * {
+  grid-area: 1 / 1 / 2 / 2;
+}
+
+/* Backdrop (위에 밑줄 그리기) */
+.fromptly-backdrop {
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+  background: transparent;
+  position: relative;
+  /* Scrollbar 숨기기 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fromptly-backdrop::-webkit-scrollbar {
+  display: none;
+}
+
+/* Highlights container */
+.fromptly-highlights {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  color: transparent;
+  min-height: 100%;
+}
+
+/* 빨간 밑줄 (Grammarly style) */
+.fromptly-underline {
+  background: transparent;
+  border-bottom: 2px solid #ff4444;
+  border-radius: 0;
+  cursor: pointer;
+  pointer-events: auto !important;
+  position: relative;
+  transition: all 150ms ease;
+  /* 호버 영역 확장 (레이아웃에 영향 없이) */
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-top: -2px;
+  margin-bottom: -2px;
+}
+
+.fromptly-underline:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-bottom-color: #ff0000;
+  border-bottom-width: 2.5px;
+}
+
+/* Word Tooltip */
+.fromptly-word-tooltip {
+  position: fixed;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 200px;
+  max-width: 300px;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  animation: fromptly-tooltip-appear 150ms ease-out;
+}
+
+@keyframes fromptly-tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fromptly-tooltip-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+
+.fromptly-tooltip-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 100ms ease;
+  margin: 2px 0;
+}
+
+.fromptly-tooltip-option:hover {
+  background-color: #f0f7ff;
+  color: #0066cc;
+  transform: translateX(2px);
+}
+
+.fromptly-tooltip-option:active {
+  background-color: #e0edff;
+}
+
 .fromptly-suggestion {
   padding: 12px 16px;
   font-size: 13px;
@@ -34,7 +148,7 @@
   background-color: #eeeeee;
 }
 
-/* Dark mode 지원 (optional) */
+/* Dark mode 지원 */
 @media (prefers-color-scheme: dark) {
   .fromptly-suggestions {
     background: #2d2d2d;
@@ -52,5 +166,37 @@
 
   .fromptly-suggestion:active {
     background-color: #4d4d4d;
+  }
+
+  .fromptly-word-tooltip {
+    background: #2d2d2d;
+    border-color: #444;
+  }
+
+  .fromptly-tooltip-title {
+    color: #999;
+  }
+
+  .fromptly-tooltip-option {
+    color: #e0e0e0;
+  }
+
+  .fromptly-tooltip-option:hover {
+    background-color: #1a3a52;
+    color: #66b3ff;
+  }
+
+  .fromptly-tooltip-option:active {
+    background-color: #0d2942;
+  }
+
+  .fromptly-underline {
+    border-bottom-color: #ff7777;
+  }
+
+  .fromptly-underline:hover {
+    background: rgba(255, 102, 102, 0.2);
+    border-bottom-color: #ff9999;
+    border-bottom-width: 2.5px;
   }
 }
