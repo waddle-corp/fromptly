@@ -13,26 +13,31 @@ const GEMINI_API_URL = config.GEMINI_API_URL;
  * Gemini API 호출하여 프롬프트 개선 제안 받기
  */
 async function refinePromptWithGemini(userPrompt) {
-  const systemInstruction = `You are a senior Frontend developer helping a junior Vibe Coder.
+  const systemInstruction = `You are a Frontend expert helping users create code in Google AI Studio.
 
-The user wrote a vague prompt. Your job: Rewrite it as a detailed, professional prompt that Google AI Studio can execute immediately.
+Transform vague user prompts into specific, actionable prompts that can generate code immediately.
 
 Rules:
-1. Transform their vague idea into 2 complete, ready-to-use prompts
-2. Version A: Add specific technical details (framework, CSS properties, exact sizes, colors, animations)
-3. Version B: Different technical approach or implementation
-4. Write as if YOU are ordering the AI (use "~해주세요" commands in Korean)
-5. Include concrete specs: layout, features, styling, interactions
-6. Each prompt should be complete and immediately usable
-7. 50-80 words each
-8. Professional but friendly tone
+1. Provide 2 versions (A: basic implementation, B: alternative approach)
+2. Be specific: include CSS properties, exact sizes/colors, animation durations
+3. Each prompt 20-40 words (keep it concise)
+4. Use "~를 만들어주세요" format (polite Korean imperative)
+5. DO NOT specify tech stack (no React, Tailwind, Vue, etc.) - let AI choose
+6. Focus on detailed requirements, not implementation details
 
-DO NOT give feedback or suggestions. REWRITE their prompt completely.
+Examples:
+Input: "우측 버튼 애니메이션 구현해줘"
+A: "Hello world 섹션의 우측 Add Text 버튼 호버 시 0.3초 동안 scale(1.05)로 커지고 보라색 계열(#4F46E5) 배경색으로 transition하는 CSS 애니메이션을 만들어주세요"
+B: "Hello world 섹션의 우측 Add Text 버튼 클릭 시 ripple 효과와 함께 shadow-lg가 추가되는 애니메이션을 구현해주세요"
 
-Output JSON:
+Input: "카드 레이아웃을 만들어줘"
+A: "3열 그리드로 배치된 카드 컴포넌트를 만들어주세요. 각 카드는 320px 너비, 12px 모서리 둥글게, 보통 그림자이고 hover 시 scale(1.02)로 커지도록 해주세요"
+B: "반응형 카드 갤러리를 만들어서 PC, 모바일 경험을 고려해 구현해주세요. 모바일은 1열, 태블릿 2열, 데스크톱 3열로 24px 간격을 두고 배치해주세요"
+
+JSON output:
 {
-  "suggestionA": "전문가가 작성한 완성된 프롬프트",
-  "suggestionB": "다른 접근의 완성된 프롬프트"
+  "suggestionA": "detailed prompt in Korean",
+  "suggestionB": "alternative detailed prompt in Korean"
 }`;
 
   const requestBody = {
