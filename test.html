@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fromptly Test Page</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 15px;
+      font-size: 16px;
+      line-height: 1.6;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      resize: vertical;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #4285f4;
+    }
+
+    .instructions {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      border-radius: 4px;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+
+    .instructions ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin: 5px 0;
+      color: #555;
+    }
+
+    .word-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .word-tag {
+      background: #fff3cd;
+      color: #856404;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      border: 1px solid #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎯 Fromptly Test Page</h1>
+
+    <p>아래 텍스트 입력창에 특정 단어를 입력하면 빨간 밑줄이 표시됩니다.</p>
+
+    <textarea placeholder="여기에 '버튼', '애니메이션', '예쁘게' 등의 단어를 입력해보세요..."></textarea>
+
+    <div class="instructions">
+      <h3>📝 사용 방법</h3>
+      <ul>
+        <li>아래 단어들을 입력하면 빨간 밑줄이 표시됩니다</li>
+        <li>밑줄 위에 마우스를 올리면 추천 단어가 나타납니다</li>
+        <li>추천 단어를 클릭하면 원래 단어가 바뀝니다</li>
+        <li>단어를 드래그해도 추천 단어가 표시됩니다</li>
+      </ul>
+
+      <h3>✨ 테스트 단어 목록</h3>
+      <div class="word-list">
+        <span class="word-tag">애니메이션</span>
+        <span class="word-tag">버튼</span>
+        <span class="word-tag">예쁘게</span>
+        <span class="word-tag">멋있게</span>
+        <span class="word-tag">좋게</span>
+        <span class="word-tag">대충</span>
+        <span class="word-tag">카드</span>
+        <span class="word-tag">페이지</span>
+      </div>
+
+      <p style="margin-top: 15px; color: #666; font-size: 14px;">
+        💡 예시: "버튼을 예쁘게 만들어주고 애니메이션을 추가해줘"
+      </p>
+    </div>
+  </div>
+
+  <script src="content.js"></script>
+</body>
+</html>
