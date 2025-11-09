@@ -50,15 +50,52 @@ function createLoadingBar() {
 /**
  * Suggestion Bar HTML 생성
  */
-function createSuggestionBar(suggestion) {
+function createSuggestionBar(suggestion, options = []) {
   const bar = document.createElement('div');
   bar.className = 'fromptly-suggestions';
 
+  // Suggestion 컨테이너
+  const suggestionContainer = document.createElement('div');
+  suggestionContainer.className = 'fromptly-suggestion-container';
+
+  // Suggestion 타이틀
+  const suggestionLabel = document.createElement('div');
+  suggestionLabel.className = 'fromptly-suggestion-label';
+  suggestionLabel.textContent = 'Full Suggestion:';
+  suggestionContainer.appendChild(suggestionLabel);
+
+  // Suggestion 영역
   const suggestionDiv = document.createElement('div');
   suggestionDiv.className = 'fromptly-suggestion';
   suggestionDiv.textContent = suggestion;
+  suggestionContainer.appendChild(suggestionDiv);
 
-  bar.appendChild(suggestionDiv);
+  bar.appendChild(suggestionContainer);
+
+  // Options 영역 (옵션이 있을 경우만)
+  if (options && options.length > 0) {
+    const optionsContainer = document.createElement('div');
+    optionsContainer.className = 'fromptly-options';
+
+    const optionsLabel = document.createElement('div');
+    optionsLabel.className = 'fromptly-options-label';
+    optionsLabel.textContent = 'Options:';
+    optionsContainer.appendChild(optionsLabel);
+
+    const optionsButtons = document.createElement('div');
+    optionsButtons.className = 'fromptly-options-buttons';
+
+    options.forEach((optionText, index) => {
+      const button = document.createElement('button');
+      button.className = 'fromptly-option-button';
+      button.textContent = optionText;
+      button.dataset.optionIndex = index;
+      optionsButtons.appendChild(button);
+    });
+
+    optionsContainer.appendChild(optionsButtons);
+    bar.appendChild(optionsContainer);
+  }
 
   return bar;
 }
@@ -66,12 +103,12 @@ function createSuggestionBar(suggestion) {
 /**
  * Suggestion Bar 표시
  */
-function showSuggestionBar(textarea, suggestion) {
+function showSuggestionBar(textarea, suggestion, options = []) {
   // 기존 Bar 제거
   removeSuggestionBar(textarea);
 
   // 새 Bar 생성
-  const bar = createSuggestionBar(suggestion);
+  const bar = createSuggestionBar(suggestion, options);
 
   // actions-container 찾기 (textarea의 상위 DOM에서 검색)
   let container = textarea;
@@ -98,14 +135,28 @@ function showSuggestionBar(textarea, suggestion) {
   // Bar 추적
   suggestionBars.set(textarea, bar);
 
-  // Click 이벤트 추가
+  // Suggestion 클릭 이벤트
   const suggestionDiv = bar.querySelector('.fromptly-suggestion');
-
   suggestionDiv.addEventListener('click', () => {
     applySuggestion(textarea, suggestion);
   });
 
-  console.log('[Fromptly] Suggestion bar displayed');
+  // Options 클릭 이벤트
+  const optionButtons = bar.querySelectorAll('.fromptly-option-button');
+  optionButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      const optionText = button.textContent;
+      appendOption(textarea, optionText);
+
+      // 클릭된 버튼 제거 (fade-out 애니메이션)
+      button.style.opacity = '0';
+      setTimeout(() => {
+        button.remove();
+      }, 200);
+    });
+  });
+
+  console.log('[Fromptly] Suggestion bar displayed with options:', options);
 }
 
 /**
@@ -167,7 +218,7 @@ function removeSuggestionBar(textarea) {
 }
 
 /**
- * 제안 적용
+ * 제안 적용 (textarea 전체 대체)
  */
 function applySuggestion(textarea, suggestionText) {
   // Badge는 HTML이므로 직접 사용 (이미 텍스트만 전달됨)
@@ -187,6 +238,25 @@ function applySuggestion(textarea, suggestionText) {
 }
 
 /**
+ * 옵션 추가 (textarea 하단에 append)
+ */
+function appendOption(textarea, optionText) {
+  const currentValue = textarea.value;
+
+  // 줄바꿈 후 "- ..." 형식으로 추가
+  const newValue = currentValue + '\n- ' + optionText;
+
+  // Textarea에 적용
+  textarea.value = newValue;
+
+  // Angular가 감지할 수 있도록 이벤트 발생
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  textarea.dispatchEvent(new Event('change', { bubbles: true }));
+
+  console.log('[Fromptly] Option appended:', optionText);
+}
+
+/**
  * LLM에게 제안 요청
  */
 function requestSuggestions(textarea, userPrompt) {
@@ -195,31 +265,54 @@ function requestSuggestions(textarea, userPrompt) {
   // 로딩 바 표시
   showLoadingBar(textarea);
 
-  // Background worker에 메시지 전송
-  chrome.runtime.sendMessage(
-    {
-      type: 'REFINE_PROMPT',
-      prompt: userPrompt
-    },
-    (response) => {
-      // 로딩 바 제거
-      removeLoadingBar(textarea);
+  let suggestionResponse = null;
+  let optionsResponse = null;
 
-      if (chrome.runtime.lastError) {
-        console.error('[Fromptly] Error:', chrome.runtime.lastError);
-        // Phase 1: 에러 시 하드코딩 제안 표시
-        showHardcodedSuggestions(textarea);
-        return;
+  // Suggestion과 Options 병렬 요청
+  const suggestionPromise = new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: 'REFINE_PROMPT', prompt: userPrompt },
+      (response) => {
+        suggestionResponse = response;
+        resolve();
       }
+    );
+  });
 
-      if (response && response.suggestions && response.suggestions.suggestion) {
-        showSuggestionBar(textarea, response.suggestions.suggestion);
-      } else {
-        // Fallback: 하드코딩 제안
-        showHardcodedSuggestions(textarea);
+  const optionsPromise = new Promise((resolve) => {
+    chrome.runtime.sendMessage(
+      { type: 'REFINE_OPTIONS', prompt: userPrompt },
+      (response) => {
+        optionsResponse = response;
+        resolve();
       }
+    );
+  });
+
+  // 두 요청 모두 완료 대기
+  Promise.all([suggestionPromise, optionsPromise]).then(() => {
+    // 로딩 바 제거
+    removeLoadingBar(textarea);
+
+    if (chrome.runtime.lastError) {
+      console.error('[Fromptly] Error:', chrome.runtime.lastError);
+      showHardcodedSuggestions(textarea);
+      return;
     }
-  );
+
+    // Suggestion 추출
+    const suggestion = suggestionResponse?.suggestions?.suggestion;
+
+    // Options 추출
+    const options = optionsResponse?.options?.options || [];
+
+    if (suggestion) {
+      showSuggestionBar(textarea, suggestion, options);
+    } else {
+      // Fallback: 하드코딩 제안
+      showHardcodedSuggestions(textarea);
+    }
+  });
 }
 
 /**
@@ -227,8 +320,9 @@ function requestSuggestions(textarea, userPrompt) {
  */
 function showHardcodedSuggestions(textarea) {
   const suggestion = 'Add a smooth hover animation to the button with a natural scale-up effect and appropriate transition timing. Make it clear that the element is interactive.';
+  const options = ['with a smooth scale-up on hover', 'with a ripple effect on click'];
 
-  showSuggestionBar(textarea, suggestion);
+  showSuggestionBar(textarea, suggestion, options);
 }
 
 /**

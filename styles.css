@@ -63,14 +63,30 @@
   z-index: 1000;
 }
 
-.fromptly-suggestion {
+/* Suggestion Container */
+.fromptly-suggestion-container {
   padding: 12px 16px;
+}
+
+.fromptly-suggestion-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.fromptly-suggestion {
   font-size: 14px;
   line-height: 1.5;
   color: #3c4043;
   cursor: pointer;
   transition: background-color 100ms ease;
   text-align: left;
+  padding: 8px 12px;
+  border-radius: 4px;
 }
 
 .fromptly-suggestion:hover {
@@ -79,6 +95,57 @@
 
 .fromptly-suggestion:active {
   background-color: #f1f3f4;
+}
+
+/* Options Container */
+.fromptly-options {
+  padding: 12px 16px;
+  border-top: 1px solid #e8eaed;
+}
+
+.fromptly-options-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #5f6368;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.fromptly-options-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Option Button (Google Material Outlined Button) */
+.fromptly-option-button {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 500;
+  color: #1967d2;
+  background: transparent;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.fromptly-option-button:hover {
+  background-color: #f8f9fa;
+  border-color: #1967d2;
+}
+
+.fromptly-option-button:active {
+  background-color: #e8f0fe;
+}
+
+/* Fade-out animation for clicked options */
+.fromptly-option-button {
+  transition: opacity 200ms ease;
 }
 
 /* Dark mode 지원 (optional) */
@@ -97,6 +164,10 @@
     border-color: #5f6368;
   }
 
+  .fromptly-suggestion-label {
+    color: #9aa0a6;
+  }
+
   .fromptly-suggestion {
     color: #e8eaed;
   }
@@ -106,6 +177,28 @@
   }
 
   .fromptly-suggestion:active {
+    background-color: #5f6368;
+  }
+
+  .fromptly-options {
+    border-top-color: #5f6368;
+  }
+
+  .fromptly-options-label {
+    color: #9aa0a6;
+  }
+
+  .fromptly-option-button {
+    color: #8ab4f8;
+    border-color: #5f6368;
+  }
+
+  .fromptly-option-button:hover {
+    background-color: #3c4043;
+    border-color: #8ab4f8;
+  }
+
+  .fromptly-option-button:active {
     background-color: #5f6368;
   }
 }

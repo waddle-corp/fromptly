@@ -10,6 +10,185 @@ const GEMINI_API_KEY = config.GEMINI_API_KEY;
 const GEMINI_API_URL = config.GEMINI_API_URL;
 
 /**
+ * Gemini API 호출하여 구현 옵션 제안 받기
+ */
+async function refineOptionsWithGemini(userPrompt) {
+  const systemInstruction = `You are a Frontend expert helping users add implementation details to their prompts.
+
+Given a user's prompt, suggest 2 specific implementation options that add clarity and useful details without changing the core intent.
+
+Core Principles:
+1. Provide EXACTLY 2 options as short phrases (10-15 words each)
+2. Options should be ADDITIVE - they append to the original prompt, not replace it
+3. Options must be CONTEXTUALLY RELEVANT to what the user is asking for
+4. The TWO options should cover DIFFERENT aspects of implementation
+5. Be specific with numeric values when helpful (e.g., "2s duration", "24px spacing", "3 items per row")
+6. Keep it concise and actionable
+7. ALWAYS output in English
+
+Common Option Categories (choose what's relevant):
+- TIMING/SPEED: animation duration, speed, delay, interval, easing function
+- VISUAL/LAYOUT: spacing, positioning, count, size, arrangement, visual effects
+- INTERACTION: hover effects, click behavior, drag-and-drop, keyboard support
+- RESPONSIVENESS: mobile/desktop behavior, breakpoints, adaptive sizing
+- ACCESSIBILITY: screen reader support, focus states, ARIA labels
+- COLOR/STYLE: color scheme, theme variants, opacity, shadows
+
+Examples:
+
+Input: "내가 좋아하는 로고들이 오른쪽에서 왼쪽으로 강처럼 흐르는 애니메이션을 구현하고 싶어"
+Output JSON:
+{
+  "options": [
+    "with 8s duration for slow, smooth scrolling movement",
+    "with 24px spacing between logos and a slight vertical displacement"
+  ]
+}
+
+Input: "버튼 애니메이션 구현해줘"
+Output JSON:
+{
+  "options": [
+    "with 0.3s transition duration and ease-out timing function",
+    "scaling from 1.0 to 1.05 with subtle shadow on hover"
+  ]
+}
+
+Input: "Create a card grid layout"
+Output JSON:
+{
+  "options": [
+    "with 0.5s staggered fade-in animation for each card",
+    "displaying 3 cards per row with 24px gap between items"
+  ]
+}
+
+Input: "로고 슬라이더 만들어줘"
+Output JSON:
+{
+  "options": [
+    "with 3s auto-advance interval and smooth slide transitions",
+    "showing 4 logos simultaneously in a horizontal carousel"
+  ]
+}
+
+Input: "Make a floating animation"
+Output JSON:
+{
+  "options": [
+    "with 2s cycle duration and ease-in-out timing",
+    "moving vertically by 20px with a gentle bounce effect"
+  ]
+}
+
+Input: "Add a color descriptor next to each hex code"
+Output JSON:
+{
+  "options": [
+    "with tooltips showing RGB values on hover",
+    "displaying color names in a small badge format"
+  ]
+}
+
+Input: "Create a dark mode toggle"
+Output JSON:
+{
+  "options": [
+    "with smooth 0.3s color transition when switching themes",
+    "persisting user preference in localStorage"
+  ]
+}
+
+CRITICAL: Output must be JSON with exactly 2 options. Format:
+{
+  "options": ["contextually relevant option 1", "contextually relevant option 2"]
+}`;
+
+  const requestBody = {
+    system_instruction: {
+      parts: [{ text: systemInstruction }]
+    },
+    contents: [
+      {
+        parts: [
+          {
+            text: `User's prompt: "${userPrompt}"\n\nProvide 2 implementation options in JSON format.`
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 2048,
+      responseMimeType: "application/json"
+    }
+  };
+
+  // API Key 체크
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY_HERE') {
+    throw new Error('Gemini API Key not configured');
+  }
+
+  try {
+    console.log('[Fromptly Background] Calling Gemini API for options...');
+
+    const url = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('[Fromptly Background] Gemini API Options Response:', data);
+
+    // Gemini 응답에서 텍스트 추출
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+      throw new Error('Invalid API response structure');
+    }
+
+    const responseText = data.candidates[0].content.parts[0].text;
+
+    // JSON 파싱 시도
+    try {
+      const parsed = JSON.parse(responseText);
+
+      // 배열로 온 경우 첫 번째 요소 사용
+      if (Array.isArray(parsed)) {
+        console.log('[Fromptly Background] Options response is an array, using first element');
+        const firstItem = parsed[0];
+        return {
+          options: firstItem?.options || []
+        };
+      }
+
+      // 객체로 온 경우
+      return {
+        options: parsed.options || []
+      };
+    } catch (parseError) {
+      console.error('[Fromptly Background] JSON parse error:', parseError);
+
+      // Fallback: 빈 배열
+      return {
+        options: []
+      };
+    }
+
+  } catch (error) {
+    console.error('[Fromptly Background] Gemini API call failed:', error);
+    throw error;
+  }
+}
+
+/**
  * Gemini API 호출하여 프롬프트 개선 제안 받기
  */
 async function refinePromptWithGemini(userPrompt) {
@@ -175,6 +354,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({
           suggestions: {
             suggestion: 'Please provide more specific details about what you want to build.'
+          }
+        });
+      });
+
+    // 비동기 응답을 위해 true 반환
+    return true;
+  }
+
+  if (request.type === 'REFINE_OPTIONS') {
+    const userPrompt = request.prompt;
+
+    // Gemini API 호출 (비동기)
+    refineOptionsWithGemini(userPrompt)
+      .then(options => {
+        sendResponse({ options });
+      })
+      .catch(error => {
+        console.error('[Fromptly Background] Options Error:', error);
+
+        // 에러 시 Fallback (빈 옵션)
+        sendResponse({
+          options: {
+            options: []
           }
         });
       });
