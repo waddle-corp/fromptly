@@ -15,29 +15,59 @@ const GEMINI_API_URL = config.GEMINI_API_URL;
 async function refinePromptWithGemini(userPrompt) {
   const systemInstruction = `You are a Frontend expert helping users create code in Google AI Studio.
 
-Transform vague user prompts into specific, actionable prompts that can generate code immediately.
+Transform vague user prompts into clear, actionable prompts optimized for Gemini API while preserving the user's original intent.
+
+IMPORTANT: Provide ONLY ONE suggestion, not multiple options.
 
 Rules:
-1. Provide 2 versions (A: basic implementation, B: alternative approach)
-2. Be specific: include CSS properties, exact sizes/colors, animation durations
-3. Each prompt 20-40 words (keep it concise)
-4. Use "~를 만들어주세요" format (polite Korean imperative)
-5. DO NOT specify tech stack (no React, Tailwind, Vue, etc.) - let AI choose
-6. Focus on detailed requirements, not implementation details
+0. **PRESERVE USER INTENT**: Keep the user's original request intact, only add clarity
+   - If user says "button animation", don't specify which button or exact properties unless context demands it
+   - If user says "card layout", don't assume grid/flex or column count unless mentioned
+   - Add details that CLARIFY the request, not CHANGE it
 
-Examples:
-Input: "우측 버튼 애니메이션 구현해줘"
-A: "Hello world 섹션의 우측 Add Text 버튼 호버 시 0.3초 동안 scale(1.05)로 커지고 보라색 계열(#4F46E5) 배경색으로 transition하는 CSS 애니메이션을 만들어주세요"
-B: "Hello world 섹션의 우측 Add Text 버튼 클릭 시 ripple 효과와 함께 shadow-lg가 추가되는 애니메이션을 구현해주세요"
+1. Be specific about BEHAVIOR and PURPOSE, not exact values:
+   - Good: "smoothly scale up", "natural transition", "appropriate spacing"
+   - Avoid: "scale(1.05)", "#4F46E5", "320px"
+   - Exception: When user's original prompt includes specific values, preserve them
+
+2. Each prompt 25-50 words (concise but complete)
+
+3. ALWAYS output in English, regardless of input language
+
+4. DO NOT specify tech stack (no React, Tailwind, Vue, etc.) - let Gemini choose
+
+5. Structure for Gemini optimization:
+   - Start with WHAT (the component/feature)
+   - Then HOW (interaction/behavior)
+   - End with PURPOSE (user experience goal)
+
+6. Include these when relevant:
+   - Accessibility hints ("clearly indicate clickability", "support keyboard navigation")
+   - Responsive considerations ("work on both mobile and desktop")
+   - Visual feedback ("provide visual feedback on interaction")
+
+Examples (note: ONE suggestion only):
+Input: "버튼 애니메이션 구현해줘"
+Output JSON:
+{
+  "suggestion": "Add a smooth scale-up animation to the button on hover. Use an appropriate transition speed to make it natural, and clearly convey to users that the element is interactive."
+}
 
 Input: "카드 레이아웃을 만들어줘"
-A: "3열 그리드로 배치된 카드 컴포넌트를 만들어주세요. 각 카드는 320px 너비, 12px 모서리 둥글게, 보통 그림자이고 hover 시 scale(1.02)로 커지도록 해주세요"
-B: "반응형 카드 갤러리를 만들어서 PC, 모바일 경험을 고려해 구현해주세요. 모바일은 1열, 태블릿 2열, 데스크톱 3열로 24px 간격을 두고 배치해주세요"
-
-JSON output:
+Output JSON:
 {
-  "suggestionA": "detailed prompt in Korean",
-  "suggestionB": "alternative detailed prompt in Korean"
+  "suggestion": "Create a clean card component layout with appropriate spacing and rounded corners for each card. Add a subtle lift effect on hover to make it feel interactive and ensure it works well on both mobile and desktop."
+}
+
+Input: "Create a logo animation moving from left to right with 60px height"
+Output JSON:
+{
+  "suggestion": "Animate the logo image smoothly from left to right while maintaining a fixed height of 60px. Implement it with a natural movement speed and consider adding a subtle fade-in effect."
+}
+
+CRITICAL: Output must be a SINGLE JSON object, not an array. Format:
+{
+  "suggestion": "your single refined prompt here"
 }`;
 
   const requestBody = {
@@ -95,18 +125,26 @@ JSON output:
     // JSON 파싱 시도
     try {
       const parsed = JSON.parse(responseText);
+
+      // 배열로 온 경우 첫 번째 요소 사용
+      if (Array.isArray(parsed)) {
+        console.log('[Fromptly Background] Response is an array, using first element');
+        const firstItem = parsed[0];
+        return {
+          suggestion: firstItem?.suggestion || firstItem || 'Please provide more specific details for better code generation.'
+        };
+      }
+
+      // 객체로 온 경우
       return {
-        suggestionA: parsed.suggestionA || parsed.A || parsed.a,
-        suggestionB: parsed.suggestionB || parsed.B || parsed.b
+        suggestion: parsed.suggestion || responseText
       };
     } catch (parseError) {
       console.error('[Fromptly Background] JSON parse error:', parseError);
 
-      // Fallback: 응답을 반으로 나누기
-      const lines = responseText.split('\n').filter(l => l.trim());
+      // Fallback: 응답 텍스트를 그대로 사용
       return {
-        suggestionA: lines[0] || '더 구체적인 설명을 추가해주세요',
-        suggestionB: lines[1] || '다른 접근 방식을 시도해보세요'
+        suggestion: responseText.trim() || 'Please provide more specific details for better code generation.'
       };
     }
 
@@ -136,8 +174,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // 에러 시 Fallback
         sendResponse({
           suggestions: {
-            suggestionA: '구체적인 기술 스택과 요구사항을 명시해주세요',
-            suggestionB: '대안적인 접근 방법을 고려해보세요'
+            suggestion: 'Please provide more specific details about what you want to build.'
           }
         });
       });

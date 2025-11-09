@@ -12,6 +12,9 @@ const debounceTimers = new WeakMap();
 // Suggestion Bar 추적
 const suggestionBars = new WeakMap();
 
+// Loading Bar 추적
+const loadingBars = new WeakMap();
+
 /**
  * Google AI Studio의 textarea 찾기
  */
@@ -28,22 +31,34 @@ function findAllAITextareas() {
 }
 
 /**
+ * Loading Bar HTML 생성
+ */
+function createLoadingBar() {
+  const bar = document.createElement('div');
+  bar.className = 'fromptly-loading';
+  bar.innerHTML = `
+    <div class="fromptly-loading-content">
+      <span class="fromptly-loading-text">Generating suggestions</span>
+      <span class="fromptly-loading-dots">
+        <span>.</span><span>.</span><span>.</span>
+      </span>
+    </div>
+  `;
+  return bar;
+}
+
+/**
  * Suggestion Bar HTML 생성
  */
-function createSuggestionBar(suggestionA, suggestionB) {
+function createSuggestionBar(suggestion) {
   const bar = document.createElement('div');
   bar.className = 'fromptly-suggestions';
 
-  const optionA = document.createElement('div');
-  optionA.className = 'fromptly-suggestion fromptly-suggestion-a';
-  optionA.innerHTML = `🅰️ ${suggestionA}`;
+  const suggestionDiv = document.createElement('div');
+  suggestionDiv.className = 'fromptly-suggestion';
+  suggestionDiv.textContent = suggestion;
 
-  const optionB = document.createElement('div');
-  optionB.className = 'fromptly-suggestion fromptly-suggestion-b';
-  optionB.innerHTML = `🅱️ ${suggestionB}`;
-
-  bar.appendChild(optionA);
-  bar.appendChild(optionB);
+  bar.appendChild(suggestionDiv);
 
   return bar;
 }
@@ -51,12 +66,12 @@ function createSuggestionBar(suggestionA, suggestionB) {
 /**
  * Suggestion Bar 표시
  */
-function showSuggestionBar(textarea, suggestionA, suggestionB) {
+function showSuggestionBar(textarea, suggestion) {
   // 기존 Bar 제거
   removeSuggestionBar(textarea);
 
   // 새 Bar 생성
-  const bar = createSuggestionBar(suggestionA, suggestionB);
+  const bar = createSuggestionBar(suggestion);
 
   // actions-container 찾기 (textarea의 상위 DOM에서 검색)
   let container = textarea;
@@ -84,18 +99,60 @@ function showSuggestionBar(textarea, suggestionA, suggestionB) {
   suggestionBars.set(textarea, bar);
 
   // Click 이벤트 추가
-  const optionA = bar.querySelector('.fromptly-suggestion-a');
-  const optionB = bar.querySelector('.fromptly-suggestion-b');
+  const suggestionDiv = bar.querySelector('.fromptly-suggestion');
 
-  optionA.addEventListener('click', () => {
-    applySuggestion(textarea, suggestionA);
-  });
-
-  optionB.addEventListener('click', () => {
-    applySuggestion(textarea, suggestionB);
+  suggestionDiv.addEventListener('click', () => {
+    applySuggestion(textarea, suggestion);
   });
 
   console.log('[Fromptly] Suggestion bar displayed');
+}
+
+/**
+ * Loading Bar 표시
+ */
+function showLoadingBar(textarea) {
+  // 기존 Loading Bar 및 Suggestion Bar 제거
+  removeLoadingBar(textarea);
+  removeSuggestionBar(textarea);
+
+  // 새 Loading Bar 생성
+  const bar = createLoadingBar();
+
+  // actions-container 찾기 (Suggestion Bar와 동일한 로직)
+  let container = textarea;
+  let actionsContainer = null;
+
+  for (let i = 0; i < 10; i++) {
+    container = container.parentElement;
+    if (!container) break;
+
+    actionsContainer = container.querySelector('.actions-container');
+    if (actionsContainer) break;
+  }
+
+  // 삽입
+  if (actionsContainer && actionsContainer.parentElement) {
+    actionsContainer.parentElement.insertBefore(bar, actionsContainer);
+  } else {
+    textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+  }
+
+  // Bar 추적
+  loadingBars.set(textarea, bar);
+
+  console.log('[Fromptly] Loading bar displayed');
+}
+
+/**
+ * Loading Bar 제거
+ */
+function removeLoadingBar(textarea) {
+  const existingBar = loadingBars.get(textarea);
+  if (existingBar && existingBar.parentElement) {
+    existingBar.remove();
+    loadingBars.delete(textarea);
+  }
 }
 
 /**
@@ -113,8 +170,8 @@ function removeSuggestionBar(textarea) {
  * 제안 적용
  */
 function applySuggestion(textarea, suggestionText) {
-  // 🅰️ 또는 🅱️ 제거
-  const cleanText = suggestionText.replace(/^🅰️\s*/, '').replace(/^🅱️\s*/, '');
+  // Badge는 HTML이므로 직접 사용 (이미 텍스트만 전달됨)
+  const cleanText = suggestionText;
 
   // Textarea에 적용
   textarea.value = cleanText;
@@ -135,6 +192,9 @@ function applySuggestion(textarea, suggestionText) {
 function requestSuggestions(textarea, userPrompt) {
   console.log('[Fromptly] Requesting suggestions for:', userPrompt);
 
+  // 로딩 바 표시
+  showLoadingBar(textarea);
+
   // Background worker에 메시지 전송
   chrome.runtime.sendMessage(
     {
@@ -142,6 +202,9 @@ function requestSuggestions(textarea, userPrompt) {
       prompt: userPrompt
     },
     (response) => {
+      // 로딩 바 제거
+      removeLoadingBar(textarea);
+
       if (chrome.runtime.lastError) {
         console.error('[Fromptly] Error:', chrome.runtime.lastError);
         // Phase 1: 에러 시 하드코딩 제안 표시
@@ -149,9 +212,8 @@ function requestSuggestions(textarea, userPrompt) {
         return;
       }
 
-      if (response && response.suggestions) {
-        const { suggestionA, suggestionB } = response.suggestions;
-        showSuggestionBar(textarea, suggestionA, suggestionB);
+      if (response && response.suggestions && response.suggestions.suggestion) {
+        showSuggestionBar(textarea, response.suggestions.suggestion);
       } else {
         // Fallback: 하드코딩 제안
         showHardcodedSuggestions(textarea);
@@ -164,10 +226,9 @@ function requestSuggestions(textarea, userPrompt) {
  * 하드코딩 제안 표시 (Phase 1 / Fallback)
  */
 function showHardcodedSuggestions(textarea) {
-  const suggestionA = '버튼 호버 시 0.3초 동안 scale(1.1)로 커지는 애니메이션을 추가해주세요';
-  const suggestionB = '버튼 클릭 시 ripple 효과와 함께 배경색이 부드럽게 변하는 애니메이션을 만들어주세요';
+  const suggestion = 'Add a smooth hover animation to the button with a natural scale-up effect and appropriate transition timing. Make it clear that the element is interactive.';
 
-  showSuggestionBar(textarea, suggestionA, suggestionB);
+  showSuggestionBar(textarea, suggestion);
 }
 
 /**
