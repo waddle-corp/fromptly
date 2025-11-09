@@ -20,16 +20,29 @@ const wordTooltips = new WeakMap();
 
 // 개선 가능한 단어 목록 (예시)
 const IMPROVABLE_WORDS = [
-  { word: '애니메이션', suggestions: ['부드러운 전환 효과', '인터랙티브 모션', 'CSS 트랜지션'] },
-  { word: '버튼', suggestions: ['인터랙티브 버튼', '클릭 가능한 액션 버튼', 'CTA 버튼'] },
-  { word: '예쁘게', suggestions: ['모던한 디자인으로', '세련된 UI로', '미니멀한 스타일로'] },
-  { word: '멋있게', suggestions: ['프로페셔널한 스타일로', '트렌디한 디자인으로', '임팩트 있는 비주얼로'] },
-  { word: '좋게', suggestions: ['효율적으로', '최적화하여', '사용자 친화적으로'] },
-  { word: '대충', suggestions: ['효율적으로', '간결하게', '심플하게'] },
-  { word: '카드', suggestions: ['Material 스타일 카드', 'Glass morphism 카드', '그림자 효과가 있는 카드'] },
-  { word: '페이지', suggestions: ['반응형 페이지', 'SPA 페이지', '다이나믹한 뷰'] }
+  {
+    word: 'flow from right to left infinitely',
+    suggestions: [
+      'create an infinite right-to-left slider',
+      'implement an infinite right-to-left carousel'
+    ]
+  },
+  {
+    word: 'flows from right to left infinitely',
+    suggestions: [
+      'runs as an infinite right-to-left slider',
+      'animates as an infinite right-to-left carousel'
+    ]
+  }
 ];
 
+// { word: '버튼', suggestions: ['인터랙티브 버튼', '클릭 가능한 액션 버튼', 'CTA 버튼'] },
+  // { word: '예쁘게', suggestions: ['모던한 디자인으로', '세련된 UI로', '미니멀한 스타일로'] },
+  // { word: '멋있게', suggestions: ['프로페셔널한 스타일로', '트렌디한 디자인으로', '임팩트 있는 비주얼로'] },
+  // { word: '좋게', suggestions: ['효율적으로', '최적화하여', '사용자 친화적으로'] },
+  // { word: '대충', suggestions: ['효율적으로', '간결하게', '심플하게'] },
+  // { word: '카드', suggestions: ['Material 스타일 카드', 'Glass morphism 카드', '그림자 효과가 있는 카드'] },
+  // { word: '페이지', suggestions: ['반응형 페이지', 'SPA 페이지', '다이나믹한 뷰'] }
 /**
  * Google AI Studio의 textarea 찾기
  */
