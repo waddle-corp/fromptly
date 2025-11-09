@@ -21,17 +21,45 @@ const wordTooltips = new WeakMap();
 // 개선 가능한 단어 목록 (예시)
 const IMPROVABLE_WORDS = [
   {
-    word: 'flow from right to left infinitely',
+    word: 'flow infinitely',
     suggestions: [
-      'create an infinite right-to-left slider',
-      'implement an infinite right-to-left carousel'
+      {
+        text: 'create an infinite right-to-left slider',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'create an infinite left-to-right slider',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'implement an infinite right-to-left carousel',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'implement an infinite left-to-right carousel',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      }
     ]
   },
   {
-    word: 'flows from right to left infinitely',
+    word: 'flows infinitely',
     suggestions: [
-      'runs as an infinite right-to-left slider',
-      'animates as an infinite right-to-left carousel'
+      {
+        text: 'runs as an infinite right-to-left slider',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'animates as an infinite right-to-left carousel',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'runs as an infinite left-to-right carousel',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      },
+      {
+        text: 'animates as an infinite left-to-right carousel',
+        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+      }
     ]
   }
 ];
@@ -295,18 +323,100 @@ function showWordTooltip(targetElement, suggestions, textarea, startIndex, endIn
   title.textContent = '추천 표현:';
   tooltip.appendChild(title);
 
+  // GIF 미리보기 영역 (처음엔 숨김)
+  const previewContainer = document.createElement('div');
+  previewContainer.className = 'fromptly-tooltip-preview';
+  previewContainer.style.display = 'none';
+
+  const previewImg = document.createElement('img');
+  previewImg.className = 'fromptly-tooltip-preview-img';
+  previewContainer.appendChild(previewImg);
+  tooltip.appendChild(previewContainer);
+
+  // Options 컨테이너
+  const optionsContainer = document.createElement('div');
+  optionsContainer.className = 'fromptly-tooltip-options';
+
   suggestions.forEach(suggestion => {
     const option = document.createElement('div');
     option.className = 'fromptly-tooltip-option';
-    option.textContent = suggestion;
+
+    // suggestion이 객체인지 문자열인지 확인
+    const suggestionText = typeof suggestion === 'string' ? suggestion : suggestion.text;
+    const previewGif = typeof suggestion === 'object' ? suggestion.previewGif : null;
+
+    option.textContent = suggestionText;
+
+    // GIF URL을 data attribute에 저장
+    if (previewGif) {
+      option.dataset.previewGif = previewGif;
+    }
 
     option.addEventListener('click', () => {
-      replaceWord(textarea, startIndex, endIndex, suggestion);
+      replaceWord(textarea, startIndex, endIndex, suggestionText);
       hideWordTooltip(textarea);
     });
 
-    tooltip.appendChild(option);
+    optionsContainer.appendChild(option);
   });
+
+  // 전역 timeout 관리 (모든 option이 공유)
+  let hideTimeout = null;
+
+  // 각 option에 직접 이벤트 추가
+  suggestions.forEach((suggestion, index) => {
+    const option = optionsContainer.children[index];
+    if (!option) return;
+
+    const previewGif = typeof suggestion === 'object' ? suggestion.previewGif : null;
+
+    if (previewGif) {
+      option.addEventListener('mouseenter', () => {
+        // hideTimeout 취소
+        if (hideTimeout) {
+          clearTimeout(hideTimeout);
+          hideTimeout = null;
+        }
+
+        // 즉시 GIF 표시
+        previewImg.src = previewGif;
+        previewContainer.style.display = 'block';
+      });
+
+      option.addEventListener('mouseleave', () => {
+        // 이전 hideTimeout 취소
+        if (hideTimeout) {
+          clearTimeout(hideTimeout);
+        }
+
+        // 약간 대기 후 숨김
+        hideTimeout = setTimeout(() => {
+          previewContainer.style.display = 'none';
+          hideTimeout = null;
+        }, 150);
+      });
+    }
+  });
+
+  // GIF 미리보기 컨테이너에도 호버 이벤트 추가 (마우스가 GIF 위에 있을 때 유지)
+  previewContainer.addEventListener('mouseenter', () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+      hideTimeout = null;
+    }
+  });
+
+  previewContainer.addEventListener('mouseleave', () => {
+    if (hideTimeout) {
+      clearTimeout(hideTimeout);
+    }
+    hideTimeout = setTimeout(() => {
+      previewContainer.style.display = 'none';
+      hideTimeout = null;
+    }, 150);
+  });
+
+  tooltip.appendChild(optionsContainer);
 
   // 위치 계산
   const rect = targetElement.getBoundingClientRect();

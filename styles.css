@@ -82,7 +82,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 8px;
   min-width: 200px;
-  max-width: 300px;
+  max-width: 400px;
   z-index: 10000;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   animation: fromptly-tooltip-appear 150ms ease-out;
@@ -128,6 +128,39 @@
 
 .fromptly-tooltip-option:active {
   background-color: #e0edff;
+}
+
+/* GIF Preview */
+.fromptly-tooltip-preview {
+  margin: 8px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f5f5f5;
+  animation: fromptly-preview-appear 200ms ease-out;
+}
+
+@keyframes fromptly-preview-appear {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+  }
+}
+
+.fromptly-tooltip-preview-img {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+
+.fromptly-tooltip-options {
+  /* Options 컨테이너 스타일 (필요시) */
 }
 
 .fromptly-suggestion {
@@ -202,5 +235,9 @@
     background: rgba(255, 102, 102, 0.2);
     border-bottom-color: #ff9999;
     border-bottom-width: 2.5px;
+  }
+
+  .fromptly-tooltip-preview {
+    background: #3d3d3d;
   }
 }
