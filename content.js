@@ -28,19 +28,19 @@ const IMPROVABLE_WORDS = [
     suggestions: [
       {
         text: 'create an infinite right-to-left slider',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/r2l.gif' // 실제 GIF URL로 교체 필요
       },
       {
         text: 'create an infinite left-to-right slider',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/output.gif'
       },
       {
-        text: 'implement an infinite right-to-left carousel',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite right-to-left slider x2',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/r2lf.gif'
       },
       {
-        text: 'implement an infinite left-to-right carousel',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite left-to-right slider x2',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/l2rfast.gif'
       }
     ]
   },
@@ -48,20 +48,20 @@ const IMPROVABLE_WORDS = [
     word: 'flows infinitely',
     suggestions: [
       {
-        text: 'runs as an infinite right-to-left slider',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite right-to-left slider',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/r2l.gif' // 실제 GIF URL로 교체 필요
       },
       {
-        text: 'animates as an infinite right-to-left carousel',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite left-to-right slider',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/output.gif'
       },
       {
-        text: 'runs as an infinite left-to-right carousel',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite right-to-left slider x2',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/r2lf.gif'
       },
       {
-        text: 'animates as an infinite left-to-right carousel',
-        previewGif: 'https://images.squarespace-cdn.com/content/v1/600d8fdcf983552f0a57b975/e03f3293-b245-4b9e-bb99-872856700406/scrolling-logo-carousel-no-app-small.gif' // 실제 GIF URL로 교체 필요
+        text: 'create an infinite left-to-right slider x2',
+        previewGif: 'https://raw.githubusercontent.com/waddle-corp/fromptly/main/l2rfast.gif'
       }
     ]
   }
@@ -566,13 +566,24 @@ function showSuggestionBar(textarea, suggestion, options = []) {
     if (actionsContainer) break;
   }
 
-  // actions-container를 찾았으면 그 바로 위에 삽입, 못 찾았으면 textarea 다음에 삽입
+  // actions-container를 찾았으면 그 바로 위에 삽입, 못 찾았으면 textarea 또는 wrapper 다음에 삽입
   if (actionsContainer && actionsContainer.parentElement) {
     actionsContainer.parentElement.insertBefore(bar, actionsContainer);
     console.log('[Fromptly] Suggestion bar inserted before actions-container');
   } else {
-    textarea.parentElement.insertBefore(bar, textarea.nextSibling);
-    console.log('[Fromptly] Suggestion bar inserted after textarea (fallback)');
+    // Word Highlight wrapper가 있는지 확인
+    const highlightData = wordHighlights.get(textarea);
+
+    if (highlightData && highlightData.wrapper) {
+      // Wrapper가 있으면 wrapper 다음에 삽입
+      const wrapper = highlightData.wrapper;
+      wrapper.parentElement.insertBefore(bar, wrapper.nextSibling);
+      console.log('[Fromptly] Suggestion bar inserted after wrapper');
+    } else {
+      // Wrapper가 없으면 textarea 다음에 삽입
+      textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+      console.log('[Fromptly] Suggestion bar inserted after textarea (fallback)');
+    }
   }
 
   // Bar 추적
@@ -629,7 +640,17 @@ function showLoadingBar(textarea) {
   if (actionsContainer && actionsContainer.parentElement) {
     actionsContainer.parentElement.insertBefore(bar, actionsContainer);
   } else {
-    textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+    // Word Highlight wrapper가 있는지 확인
+    const highlightData = wordHighlights.get(textarea);
+
+    if (highlightData && highlightData.wrapper) {
+      // Wrapper가 있으면 wrapper 다음에 삽입
+      const wrapper = highlightData.wrapper;
+      wrapper.parentElement.insertBefore(bar, wrapper.nextSibling);
+    } else {
+      // Wrapper가 없으면 textarea 다음에 삽입
+      textarea.parentElement.insertBefore(bar, textarea.nextSibling);
+    }
   }
 
   // Bar 추적
@@ -798,24 +819,24 @@ function attachInputListener(textarea) {
       removeHighlightOverlay(textarea);
     }
 
-    // 전체 프롬프트 제안 (기존 로직) - 비활성화
-    // const trimmedValue = value.trim();
-    // if (trimmedValue.length < 10) {
-    //   removeSuggestionBar(textarea);
-    //   return;
-    // }
+    // 전체 프롬프트 제안 (기존 로직)
+    const trimmedValue = value.trim();
+    if (trimmedValue.length < 10) {
+      removeSuggestionBar(textarea);
+      return;
+    }
 
-    // // Debounce: 1초 대기
-    // const existingTimer = debounceTimers.get(textarea);
-    // if (existingTimer) {
-    //   clearTimeout(existingTimer);
-    // }
+    // Debounce: 1초 대기
+    const existingTimer = debounceTimers.get(textarea);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
 
-    // const timer = setTimeout(() => {
-    //   requestSuggestions(textarea, trimmedValue);
-    // }, 1000);
+    const timer = setTimeout(() => {
+      requestSuggestions(textarea, trimmedValue);
+    }, 1000);
 
-    // debounceTimers.set(textarea, timer);
+    debounceTimers.set(textarea, timer);
   });
 
   // 텍스트 선택(드래그) 이벤트
